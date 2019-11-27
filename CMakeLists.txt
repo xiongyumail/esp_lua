@@ -1,4 +1,5 @@
-set(COMPONENT_SRCS src/lapi.c
+set(COMPONENT_SRCS esp_lua.c
+                   src/lapi.c
                    src/lbaselib.c
                    src/lcode.c
                    src/lctype.c
@@ -30,8 +31,11 @@ set(COMPONENT_SRCS src/lapi.c
                    src/lstrlib.c
                    src/ltablib.c
                    src/lundump.c
-                   src/lvm.c)
+                   src/lvm.c
+                   src/lua.c)
 
-set(COMPONENT_ADD_INCLUDEDIRS src)
+set(COMPONENT_ADD_INCLUDEDIRS src include)
 
 register_component()
+
+component_compile_options(PUBLIC -DLUA_USE_IDF -DLUA_USE_C89)

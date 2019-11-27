@@ -11,6 +11,9 @@
 #include <limits.h>
 #include <stddef.h>
 
+#ifdef LUA_USE_IDF
+#include "esp_lua.h"
+#endif
 
 /*
 ** ===================================================================

@@ -38,4 +38,4 @@ set(COMPONENT_ADD_INCLUDEDIRS src include)
 
 register_component()
 
-component_compile_options(PUBLIC -DLUA_USE_IDF -DLUA_USE_C89)
+component_compile_options(PUBLIC -DLUA_USE_IDF -DLUA_USE_C89 -DLUA_COMPAT_MATHLIB)

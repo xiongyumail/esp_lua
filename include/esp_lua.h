@@ -55,9 +55,7 @@ void esp_lua_add_history(const char *string);
 
 void esp_lua_free(void *ptr);
 
-int esp_lua_main(void);
-
-int esp_lua_init(FILE *in, FILE *out);
+int esp_lua(FILE *in, FILE *out);
 
 #ifdef __cplusplus
 }

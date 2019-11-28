@@ -592,11 +592,7 @@ static int pmain (lua_State *L) {
   return 1;
 }
 
-#ifdef LUA_USE_IDF
-int lua_main (int argc, char **argv) {
-#else
 int main (int argc, char **argv) {
-#endif
   int status, result;
   lua_State *L = luaL_newstate();  /* create state */
   if (L == NULL) {

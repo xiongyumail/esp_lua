@@ -90,16 +90,11 @@ void esp_lua_free(void *ptr)
 
 }
 
-int esp_lua_main(void)
-{   
-    extern int lua_main (int argc, char **argv);
-    return lua_main (1, ESP_LUA_ARGV);   
-}
-
-int esp_lua_init(FILE *in, FILE *out)
+int esp_lua(FILE *in, FILE *out)
 {
     fin = in;
     fout = out;
 
-    return 0;
+    extern int lua_main (int argc, char **argv);
+    return lua_main (1, ESP_LUA_ARGV);
 }

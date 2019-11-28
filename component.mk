@@ -1,4 +1,5 @@
-COMPONENT_SRCS :=  src/lapi.c \
+COMPONENT_SRCS :=  esp_lua.c \
+                   src/lapi.c \
                    src/lbaselib.c \
                    src/lcode.c \
                    src/lctype.c \
@@ -30,6 +31,11 @@ COMPONENT_SRCS :=  src/lapi.c \
                    src/lstrlib.c \
                    src/ltablib.c \
                    src/lundump.c \
-                   src/lvm.c 
+                   src/lvm.c \
+                   src/lua.c
 
-COMPONENT_ADD_INCLUDEDIRS := src
+COMPONENT_ADD_INCLUDEDIRS := src \
+                             include
+
+CFLAGS += -DLUA_USE_IDF -DLUA_USE_C89 -DLUA_COMPAT_MATHLIB
+CFLAGS += -Dmain=lua_main

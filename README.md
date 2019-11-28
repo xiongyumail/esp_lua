@@ -9,7 +9,6 @@
 
 void app_main()
 {
-    esp_lua_init(stdin, stdout);
-    esp_lua_main();
+    esp_lua(stdin, stdout);
 }
 ```

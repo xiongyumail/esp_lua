@@ -30,7 +30,7 @@ extern "C" {
 
 /* print an error message */
 #if !defined(lua_writestringerror)
-#define lua_writestringerror(s,p) 
+#define lua_writestringerror(s,p) esp_lua_writestringerror(s, p)
 #endif
 
 #if !defined(lua_readline)	/* { */
@@ -48,6 +48,8 @@ void (*esp_lua_signal(int sig, void (*func)(int)))(int);
 size_t esp_lua_writestring(const char *str, size_t size);
 
 void esp_lua_writeline(void);
+
+void esp_lua_writestringerror(const char *fmt, ...);
 
 char *esp_lua_readline(const char *prompt);
 

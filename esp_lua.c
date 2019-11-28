@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_lua.h"
@@ -14,6 +15,7 @@ char lua_str[LUA_MAXINPUT] = {0};
 
 int esp_lua_system(const char * string)
 {
+    printf(string);
     return 0;
 }
 
@@ -31,6 +33,15 @@ void esp_lua_writeline(void)
 {
     esp_lua_writestring("\n", 1);
     fflush(fout);
+}
+
+void esp_lua_writestringerror(const char *fmt, ...)
+{
+    int n;
+    va_list arg_list;
+    va_start(arg_list,fmt);
+    n = fprintf(fout,fmt,arg_list);
+    va_end(arg_list);
 }
 
 char *esp_lua_fgets(char *str, int n, FILE *f) 

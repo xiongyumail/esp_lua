@@ -49,7 +49,7 @@ void lua_task(void *arg)
 {
     char *ESP_LUA_ARGV[2] = {"./lua", NULL};
 
-    fin_buffer  = (char *)calloc(sizeof(char) + 1, sizeof(char)); // We need check the chart one by one.
+    fin_buffer  = (char *)calloc(sizeof(char) + 1, sizeof(char)); // We need check the character one by one.
     fout_buffer = (char *)calloc(LUA_MAXINPUT + 1, sizeof(char));
     ferr_buffer = (char *)calloc(LUA_MAXINPUT + 1, sizeof(char));
     fin  = fmemopen(fin_buffer,  sizeof(char), "r");

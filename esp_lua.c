@@ -33,11 +33,13 @@ void esp_lua_writeline(void)
 
 void esp_lua_writestringerror(const char *fmt, ...)
 {
-    int n;
+    char *str = calloc(LUA_MAXINPUT, sizeof(char));
     va_list arg_list;
-    va_start(arg_list,fmt);
-    n = vfprintf(ferr,fmt,arg_list);
+    va_start(arg_list, fmt);
+    vsnprintf(str, LUA_MAXINPUT, fmt, arg_list); // I don't know why vfprinf(fout...) can't use when fout != stderr.
     va_end(arg_list);
+    fprintf(fout, str);
+    free(str);
 }
 
 char *esp_lua_fgets(char *str, int n, FILE *f) 

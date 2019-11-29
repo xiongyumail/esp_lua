@@ -6,16 +6,12 @@
 #include "freertos/task.h"
 #include "esp_lua.h"
 
-FILE *fin = NULL;
-FILE *fout = NULL;
-
-const static char *ESP_LUA_ARGV[1] = {"./lua"};
-
-char lua_str[LUA_MAXINPUT] = {0};
+static FILE *fin = NULL;
+static FILE *fout = NULL;
+static FILE *ferr = NULL;
 
 int esp_lua_system(const char * string)
 {
-    printf(string);
     return 0;
 }
 
@@ -40,14 +36,13 @@ void esp_lua_writestringerror(const char *fmt, ...)
     int n;
     va_list arg_list;
     va_start(arg_list,fmt);
-    n = fprintf(fout,fmt,arg_list);
+    n = vfprintf(ferr,fmt,arg_list);
     va_end(arg_list);
 }
 
 char *esp_lua_fgets(char *str, int n, FILE *f) 
 {
     char str_read[2] = {0};
-
     while (1) {
         if (fread(str_read, sizeof(char), 1, f) != 0) { // read char one by one, because esp can't block read.
             if (strchr(str_read, '\b') != NULL) {
@@ -60,6 +55,7 @@ char *esp_lua_fgets(char *str, int n, FILE *f)
                 fputs(str_read, fout);
                 fflush(fout);
                 if (strlen(str) + strlen(str_read) +2 >= n) { // can't too long.
+                    free(str);
                     return NULL;
                 }
                 strcat(str, str_read);
@@ -80,10 +76,7 @@ char *esp_lua_fgets(char *str, int n, FILE *f)
 
 char *esp_lua_readline(const char *prompt)
 {
-    char str_read[2] = {0};
-    char *str = lua_str;
-
-    memset(str, 0, LUA_MAXINPUT);
+    char *str = calloc(LUA_MAXINPUT, sizeof(char));
 
     fputs(prompt, fout); /* show prompt */
     fflush(fout);
@@ -93,19 +86,27 @@ char *esp_lua_readline(const char *prompt)
 
 void esp_lua_add_history(const char *string)
 {
-
 }
 
 void esp_lua_free(void *ptr)
 {
-
+    free(ptr);
 }
 
-int esp_lua(FILE *in, FILE *out)
+int esp_lua_init(FILE *in, FILE *out, FILE *err)
 {
     fin = in;
     fout = out;
+    ferr = err;
 
+    // Clear Screen
+    fprintf(fout,"\x1b[H\x1b[2J");
+    return 0;
+}
+
+int esp_lua_main(int argc, char **argv)
+{
     extern int lua_main (int argc, char **argv);
-    return lua_main (1, ESP_LUA_ARGV);
+
+    return lua_main (argc, argv);
 }

@@ -18,6 +18,10 @@ extern "C" {
 #define signal(sig, func)  esp_lua_signal(sig, func)
 #endif
 
+#if !defined(exit)
+#define exit(status) esp_lua_exit(status)
+#endif
+
 /* print a string */
 #if !defined(lua_writestring)
 #define lua_writestring(s,l)   esp_lua_writestring(s,l)
@@ -55,6 +59,8 @@ extern "C" {
 int esp_lua_system(const char * string);
 
 void (*esp_lua_signal(int sig, void (*func)(int)))(int);
+
+void esp_lua_exit(int status);
 
 size_t esp_lua_writestring(const char *str, size_t size);
 

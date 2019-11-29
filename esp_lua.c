@@ -10,6 +10,8 @@ static FILE *fin = NULL;
 static FILE *fout = NULL;
 static FILE *ferr = NULL;
 
+int run_flag = 0;
+
 int esp_lua_system(const char * string)
 {
     return 0;
@@ -18,6 +20,11 @@ int esp_lua_system(const char * string)
 void (*esp_lua_signal(int sig, void (*func)(int)))(int)
 {
     return 0;
+}
+
+void esp_lua_exit(int status)
+{
+    run_flag = 0;
 }
 
 size_t esp_lua_writestring(const char *str, size_t size)
@@ -63,11 +70,13 @@ char *esp_lua_fgets(char *str, int n, FILE *f)
                 strcat(str, str_read);
                 if (strchr(str_read, '\n') != NULL) {
                     // need 2 '\n'
-                    fputs("\n", fout);
+                    fputs("\r\n", fout);
                     fflush(fout);
                     break;
                 }
             }
+        } else if (!run_flag) {
+            return NULL;
         } else {
             vTaskDelay(10 / portTICK_RATE_MS);
         }
@@ -101,8 +110,6 @@ int esp_lua_init(FILE *in, FILE *out, FILE *err)
     fout = out;
     ferr = err;
 
-    // Clear Screen
-    fprintf(fout,"\x1b[H\x1b[2J");
     return 0;
 }
 
@@ -110,5 +117,6 @@ int esp_lua_main(int argc, char **argv)
 {
     extern int lua_main (int argc, char **argv);
 
+    run_flag = 1;
     return lua_main (argc, argv);
 }

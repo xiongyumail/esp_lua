@@ -73,16 +73,16 @@ void std_task(void *arg)
 {
     char c[2];
 
-    while (1) {
+    while (1) { 
         if (ferr && ftell(ferr)) {
             fprintf(stderr, ferr_buffer);
-            fseek(ferr, 0, SEEK_SET);
+            rewind (ferr);
         } else if (fout && ftell(fout)) {
             fprintf(stdout, fout_buffer);
-            fseek(fout, 0, SEEK_SET);
+            rewind (fout);
         } else if (fin && fread(c, sizeof(char), 1, stdin) != 0) {
-            strcpy(fin_buffer, c);
-            fseek(fin, 0, SEEK_SET);
+            sprintf(fin_buffer, c);
+            rewind (fin);
         } else {
             vTaskDelay(10 / portTICK_RATE_MS);
         }
@@ -91,7 +91,7 @@ void std_task(void *arg)
 
 void app_main()
 {
-    xTaskCreate(std_task, "std_task", 4096, NULL, 5, NULL);
+    xTaskCreate(stream_task, "stream_task", 4096, NULL, 5, NULL);
     xTaskCreate(lua_task, "lua_task", 4096, NULL, 5, NULL);
 }
 ```

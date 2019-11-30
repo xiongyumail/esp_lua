@@ -24,7 +24,7 @@ void (*esp_lua_signal(int sig, void (*func)(int)))(int)
 
 void esp_lua_exit(int status)
 {
-    esp_lua_writestringerror("exit: %d", status);
+    // esp_lua_writestringerror("exit: %d", status);
     run_flag = 0;
 }
 
@@ -46,7 +46,7 @@ void esp_lua_writestringerror(const char *fmt, ...)
     va_start(arg_list, fmt);
     vsnprintf(str, LUA_MAXINPUT, fmt, arg_list); // I don't know why vfprinf(fout...) can't use when fout != stderr.
     va_end(arg_list);
-    fprintf(ferr, "\r\n");
+    fprintf(ferr, "\n\n");
     fprintf(ferr, str);
     fflush(ferr);
     free(str);

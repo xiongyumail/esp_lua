@@ -85,7 +85,7 @@ void stream_task(void *arg)
 
     while (1) { 
         if (ferr && ftell(ferr)) {
-            fprintf(stdout, ferr_buffer);
+            fprintf(stderr, ferr_buffer);
             rewind (ferr);
         }
 

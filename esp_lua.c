@@ -10,7 +10,7 @@ static FILE *fin = NULL;
 static FILE *fout = NULL;
 static FILE *ferr = NULL;
 
-int run_flag = 0;
+static int run_flag = 0;
 
 int esp_lua_system(const char * string)
 {
@@ -24,6 +24,7 @@ void (*esp_lua_signal(int sig, void (*func)(int)))(int)
 
 void esp_lua_exit(int status)
 {
+    esp_lua_writestringerror("exit: %d", status);
     run_flag = 0;
 }
 
@@ -45,7 +46,9 @@ void esp_lua_writestringerror(const char *fmt, ...)
     va_start(arg_list, fmt);
     vsnprintf(str, LUA_MAXINPUT, fmt, arg_list); // I don't know why vfprinf(fout...) can't use when fout != stderr.
     va_end(arg_list);
-    fprintf(fout, str);
+    fprintf(ferr, "\r\n");
+    fprintf(ferr, str);
+    fflush(ferr);
     free(str);
 }
 
@@ -53,7 +56,7 @@ char *esp_lua_fgets(char *str, int n, FILE *f)
 {
     char str_read[2] = {0};
     while (1) {
-        if (fread(str_read, sizeof(char), 1, f) != 0) { // read char one by one, because esp can't block read.
+        if (fread(str_read, sizeof(char), 1, f) != 0) {
             if (strchr(str_read, '\b') != NULL) {
                 if (strlen(str) != 0) { // Do not del too much
                     fputs("\b \b", fout);

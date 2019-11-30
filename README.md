@@ -23,7 +23,11 @@ void app_main()
 {
     const char *ESP_LUA_ARGV[2] = {"./lua", NULL};
     esp_lua_init(stdin, stdout, stderr);
-    esp_lua_main(1, ESP_LUA_ARGV);
+    while (1) {
+        // Clear monitor screen
+        fprintf(stdout,"\x1b[H\x1b[2J");
+        esp_lua_main(1, ESP_LUA_ARGV);
+    }
 }
 ```
 
@@ -57,7 +61,13 @@ void lua_task(void *arg)
     ferr = fmemopen(ferr_buffer, LUA_MAXINPUT, "w");
     
     esp_lua_init(fin, fout, ferr);
-    esp_lua_main(1, ESP_LUA_ARGV);
+
+    while (1) {
+        // Clear monitor screen
+        fprintf(stdout,"\x1b[H\x1b[2J");
+        esp_lua_main(1, ESP_LUA_ARGV);
+    }
+    
 
     fclose(fin);
     free(fin_buffer);
@@ -69,23 +79,35 @@ void lua_task(void *arg)
     vTaskDelete(NULL);
 }
 
-void std_task(void *arg)
+void stream_task(void *arg)
 {
     char c[2];
 
     while (1) { 
         if (ferr && ftell(ferr)) {
-            fprintf(stderr, ferr_buffer);
+            fprintf(stdout, ferr_buffer);
             rewind (ferr);
-        } else if (fout && ftell(fout)) {
+        }
+
+        if (fout && ftell(fout)) {
             fprintf(stdout, fout_buffer);
             rewind (fout);
-        } else if (fin && fread(c, sizeof(char), 1, stdin) != 0) {
-            sprintf(fin_buffer, c);
-            rewind (fin);
-        } else {
-            vTaskDelay(10 / portTICK_RATE_MS);
         }
+
+        if (fin && fread(c, sizeof(char), 1, stdin) != 0) {
+            fin_buffer[0] = c[0];
+            fin_buffer[1] = '\0';
+            rewind (fin);
+            while (1) { // Wait for Lua to complete input
+                if (ftell(fin) == 1) {
+                    break;
+                } else {
+                    vTaskDelay(10 / portTICK_RATE_MS);
+                }
+            }
+        }
+        
+        vTaskDelay(10 / portTICK_RATE_MS);
     }
 }
 

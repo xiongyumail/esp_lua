@@ -12,7 +12,7 @@
 #include <stddef.h>
 
 #ifdef LUA_USE_IDF
-#include "esp_lua.h"
+#include "esp_lua_port.h"
 #endif
 
 /*

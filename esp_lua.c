@@ -9,8 +9,43 @@
 static FILE *fin = NULL;
 static FILE *fout = NULL;
 static FILE *ferr = NULL;
+static luaL_Reg *esp_lua_libs = NULL;
 
 static int run_flag = 0;
+
+static const luaL_Reg loadedlibs[] = {
+  {"_G", luaopen_base},
+  {LUA_LOADLIBNAME, luaopen_package},
+  {LUA_COLIBNAME, luaopen_coroutine},
+  {LUA_TABLIBNAME, luaopen_table},
+  {LUA_IOLIBNAME, luaopen_io},
+  {LUA_OSLIBNAME, luaopen_os},
+  {LUA_STRLIBNAME, luaopen_string},
+  {LUA_MATHLIBNAME, luaopen_math},
+  {LUA_UTF8LIBNAME, luaopen_utf8},
+  {LUA_DBLIBNAME, luaopen_debug},
+#if defined(LUA_COMPAT_BITLIB)
+  {LUA_BITLIBNAME, luaopen_bit32},
+#endif
+  {NULL, NULL}
+};
+
+void esp_luaL_openlibs(lua_State *L) 
+{
+  const luaL_Reg *lib;
+  /* "require" functions from 'loadedlibs' and set results to global table */
+  for (lib = loadedlibs; lib->func; lib++) {
+    luaL_requiref(L, lib->name, lib->func, 1);
+    lua_pop(L, 1);  /* remove lib */
+  }
+
+  if (esp_lua_libs != NULL) {
+    for (lib = esp_lua_libs; lib->func; lib++) {
+        luaL_requiref(L, lib->name, lib->func, 1);
+        lua_pop(L, 1);  /* remove lib */
+    }
+  }
+}
 
 int esp_lua_system(const char * string)
 {
@@ -24,7 +59,6 @@ void (*esp_lua_signal(int sig, void (*func)(int)))(int)
 
 void esp_lua_exit(int status)
 {
-    // esp_lua_writestringerror("exit: %d", status);
     run_flag = 0;
 }
 
@@ -107,13 +141,12 @@ void esp_lua_free(void *ptr)
     free(ptr);
 }
 
-int esp_lua_init(FILE *in, FILE *out, FILE *err)
+void esp_lua_init(FILE *in, FILE *out, FILE *err, luaL_Reg *libs)
 {
     fin = in;
     fout = out;
     ferr = err;
-
-    return 0;
+    esp_lua_libs = libs;
 }
 
 int esp_lua_main(int argc, char **argv)

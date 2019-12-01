@@ -22,7 +22,6 @@ set(COMPONENT_SRCS esp_lua.c
                    src/ldblib.c
                    src/ldo.c
                    src/lfunc.c
-                   src/linit.c
                    src/llex.c
                    src/lmem.c
                    src/lobject.c

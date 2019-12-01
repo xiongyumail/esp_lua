@@ -1,6 +1,6 @@
 ## _ESP_LUA_
 
-Very pure Lua library, I only added the `esp_lua.h` header file to `luaconf.h`
+Very pure Lua library, I only added the `esp_lua_port.h` header file to `luaconf.h`
 
 I have implemented a simple terminal, but it is not perfect. For example, history has not been implemented.
 
@@ -8,39 +8,58 @@ I also want to use `linenose`, but I'm too `vegetable` to use it. :（
 
 ## How to use
 
-* stdin, stdout, stderr
+```bash
+cd [project path]/components
+git submodule add https://github.com/xiongyumail/esp_lua
+```
+
+* stdin, stdout, stderr, baselibs
 
 The most commonly used method, but only through the serial port input and output.
 
 ```c
-#include <stdio.h>
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
 #include "esp_lua.h"
 
 void app_main()
 {
     const char *ESP_LUA_ARGV[2] = {"./lua", NULL};
-    esp_lua_init(stdin, stdout, stderr);
+    esp_lua_init(stdin, stdout, stderr, NULL);
     while (1) {
         // Clear monitor screen
-        fprintf(stdout,"\x1b[H\x1b[2J");
+        fprintf(stdout,"\x1b[H\x1b[2J\n");
         esp_lua_main(1, ESP_LUA_ARGV);
     }
 }
 ```
 
-* fmem
+* fmem, mylibs
 
 Here file memory I/O stream is bound to STD, just to show how to use it, you can also map it to other devices, such as LCD.
 
 ```c
-#include <stdio.h>
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
 #include "esp_lua.h"
+
+static int mylib_hello(lua_State *L) 
+{
+  lua_pushstring(L, "hello esp lua!");
+  return 1;
+}
+
+static const luaL_Reg mylib[] = {
+  {"hello",     mylib_hello},
+  {NULL, NULL}
+};
+
+LUAMOD_API int luaopen_mylib(lua_State *L) 
+{
+  luaL_newlib(L, mylib);
+  return 1;
+}
+
+static const luaL_Reg mylibs[] = {
+  {"mylib", luaopen_mylib},
+  {NULL, NULL}
+};
 
 FILE *fin = NULL;
 FILE *fout = NULL;
@@ -60,11 +79,11 @@ void lua_task(void *arg)
     fout = fmemopen(fout_buffer, LUA_MAXINPUT, "w");
     ferr = fmemopen(ferr_buffer, LUA_MAXINPUT, "w");
     
-    esp_lua_init(fin, fout, ferr);
+    esp_lua_init(fin, fout, ferr, mylibs);
 
     while (1) {
         // Clear monitor screen
-        fprintf(stdout,"\x1b[H\x1b[2J");
+        fprintf(stdout,"\x1b[H\x1b[2J\n");
         esp_lua_main(1, ESP_LUA_ARGV);
     }
     
@@ -114,6 +133,6 @@ void stream_task(void *arg)
 void app_main()
 {
     xTaskCreate(stream_task, "stream_task", 4096, NULL, 5, NULL);
-    xTaskCreate(lua_task, "lua_task", 4096, NULL, 5, NULL);
+    xTaskCreate(lua_task, "lua_task", 8192, NULL, 5, NULL);
 }
 ```

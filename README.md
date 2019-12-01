@@ -50,7 +50,7 @@ static const luaL_Reg mylib[] = {
   {NULL, NULL}
 };
 
-LUAMOD_API int luaopen_mylib(lua_State *L) 
+static int luaopen_mylib(lua_State *L) 
 {
   luaL_newlib(L, mylib);
   return 1;

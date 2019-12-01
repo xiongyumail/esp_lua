@@ -6,6 +6,8 @@ I have implemented a simple terminal, but it is not perfect. For example, histor
 
 I also want to use `linenose`, but I'm too `vegetable` to use it. :（
 
+![lua.gif](lua.gif)
+
 ## How to use
 
 ```bash

@@ -47,6 +47,56 @@ void esp_luaL_openlibs(lua_State *L)
   }
 }
 
+size_t esp_lua_fread(char *str, size_t size, size_t n, FILE *f)
+{
+    char c[2] = {0};
+
+    if (str == NULL || f == NULL || size * n == 0) {
+        return 0;
+    }
+
+    // Block until the corresponding number of characters is obtained
+    for (int x = 0; x < size * n;) {
+        if (fread(c, sizeof(char), 1, f) <= 0) {
+            str[x++] = c[0];
+        } else {
+            vTaskDelay(10 / portTICK_RATE_MS);
+        }
+    }
+    str[x] = '\0';
+
+    return x;
+};
+
+char *esp_lua_fgets(char *str, int n, FILE *f) 
+{
+    if (str == NULL || n <= 0) {
+        return NULL;
+    }
+    
+    // Block until the corresponding number of characters is obtained
+    for (int x = 0; x < n;) {
+        if (fread(c, sizeof(char), 1, f) <= 0) {
+            if (c[0] == '\n') {
+                break;
+            }
+            str[x++] = c[0];
+        } else {
+            vTaskDelay(10 / portTICK_RATE_MS);
+        }
+    }
+    str[x] = '\0';
+    
+    return str;
+}
+
+int	esp_lua_fgetc(FILE *f) 
+{
+    char *str[2] = {0};
+    esp_lua_fread(str, sizeof(char), 1, f);
+    return (int)str[0];
+}
+
 int esp_lua_system(const char * string)
 {
     return 0;

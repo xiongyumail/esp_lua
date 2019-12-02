@@ -31,9 +31,10 @@ set(COMPONENT_SRCS esp_lua.c
                    src/ltablib.c
                    src/lundump.c
                    src/lvm.c
-                   src/lua.c)
+                   src/lua.c
+                   linenoise/linenoise.c)
 
-set(COMPONENT_ADD_INCLUDEDIRS src include)
+set(COMPONENT_ADD_INCLUDEDIRS src include linenoise)
 
 register_component()
 

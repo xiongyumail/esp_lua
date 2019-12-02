@@ -141,12 +141,12 @@ void esp_lua_free(void *ptr)
     free(ptr);
 }
 
-void esp_lua_init(FILE *in, FILE *out, FILE *err, luaL_Reg *libs)
+void esp_lua_init(FILE *in, FILE *out, FILE *err, const luaL_Reg *libs)
 {
     fin = in;
     fout = out;
     ferr = err;
-    esp_lua_libs = libs;
+    esp_lua_libs = (luaL_Reg *)libs;
 }
 
 int esp_lua_main(int argc, char **argv)

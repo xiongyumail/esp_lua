@@ -749,7 +749,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             if (c2 == 0) continue;
             c = c2;
         }
-
+        
         switch(c) {
         case ENTER:    /* enter */
             history_len--;
@@ -937,21 +937,25 @@ static int linenoiseDumb(char* buf, size_t buflen, const char* prompt) {
         esp_lua_read(&c, 1);
         if (c == '\n') {
             break;
+        } else if (c == CTRL_C || c == CTRL_D) { // exit
+            break;
         } else if (c >= 0x1c && c <= 0x1f){
             continue; /* consume arrow keys */
         } else if (c == BACKSPACE || c == 0x8) {
             if (count > 0) {
                 buf[count - 1] = 0;
                 count --;
+                esp_lua_printf("\x08 "); /* Windows CMD: erase symbol under cursor */
+            } else {
+                continue;
             }
-            esp_lua_printf("\x08 "); /* Windows CMD: erase symbol under cursor */
         } else {
             buf[count] = c;
             ++count;
         }
         esp_lua_putc(c); /* echo */
     }
-    esp_lua_putc('\n');
+    esp_lua_printf(" \n");
     return count;
 }
 

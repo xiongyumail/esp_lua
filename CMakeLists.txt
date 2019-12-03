@@ -32,10 +32,9 @@ set(COMPONENT_SRCS lua/lapi.c
                    lua/lvm.c
                    lua/lua.c
                    linenoise/linenoise.c
-                   ring_buf/ring_buf.c
                    esp_lua.c)
 
-set(COMPONENT_ADD_INCLUDEDIRS lua include linenoise ring_buf)
+set(COMPONENT_ADD_INCLUDEDIRS lua include linenoise)
 
 register_component()
 

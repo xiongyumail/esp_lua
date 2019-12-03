@@ -43,7 +43,7 @@ extern "C" {
 
 #if !defined(lua_readline)	/* { */
 #include "linenoise.h"
-#define lua_readline(L,b,p)	((void)L, b=linenoise(p), b != NULL)
+#define lua_readline(L,b,p)	((void)L, ((b)=linenoise(p)) != NULL)
 #define lua_saveline(L,line)	((void)L, linenoiseHistoryAdd(line))
 #define lua_freeline(L,b)	((void)L, linenoiseFree(b))
 #endif				/* } */

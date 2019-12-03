@@ -1,42 +1,43 @@
-set(COMPONENT_SRCS src/lapi.c
-                   src/lbaselib.c
-                   src/lcode.c
-                   src/lctype.c
-                   src/ldebug.c
-                   src/ldump.c
-                   src/lgc.c
-                   src/liolib.c
-                   src/lmathlib.c
-                   src/loadlib.c
-                   src/lopcodes.c
-                   src/lparser.c
-                   src/lstring.c
-                   src/ltable.c
-                   src/ltm.c
-                   src/lutf8lib.c
-                   src/lzio.c
-                   src/lauxlib.c
-                   src/lbitlib.c
-                   src/lcorolib.c
-                   src/ldblib.c
-                   src/ldo.c
-                   src/lfunc.c
-                   src/llex.c
-                   src/lmem.c
-                   src/lobject.c
-                   src/loslib.c
-                   src/lstate.c
-                   src/lstrlib.c
-                   src/ltablib.c
-                   src/lundump.c
-                   src/lvm.c
-                   src/lua.c
+set(COMPONENT_SRCS lua/lapi.c
+                   lua/lbaselib.c
+                   lua/lcode.c
+                   lua/lctype.c
+                   lua/ldebug.c
+                   lua/ldump.c
+                   lua/lgc.c
+                   lua/liolib.c
+                   lua/lmathlib.c
+                   lua/loadlib.c
+                   lua/lopcodes.c
+                   lua/lparser.c
+                   lua/lstring.c
+                   lua/ltable.c
+                   lua/ltm.c
+                   lua/lutf8lib.c
+                   lua/lzio.c
+                   lua/lauxlib.c
+                   lua/lbitlib.c
+                   lua/lcorolib.c
+                   lua/ldblib.c
+                   lua/ldo.c
+                   lua/lfunc.c
+                   lua/llex.c
+                   lua/lmem.c
+                   lua/lobject.c
+                   lua/loslib.c
+                   lua/lstate.c
+                   lua/lstrlib.c
+                   lua/ltablib.c
+                   lua/lundump.c
+                   lua/lvm.c
+                   lua/lua.c
                    linenoise/linenoise.c
+                   ring_buf/ring_buf.c
                    esp_lua.c)
 
-set(COMPONENT_ADD_INCLUDEDIRS src include linenoise)
+set(COMPONENT_ADD_INCLUDEDIRS lua include linenoise ring_buf)
 
 register_component()
 
 component_compile_options(PUBLIC -DLUA_USE_IDF -DLUA_USE_C89 -DLUA_COMPAT_MATHLIB)
-component_compile_options(PUBLIC -Dmain=lua_main)
+component_compile_options(PRIVATE -Dmain=lua_main)

@@ -48,6 +48,16 @@ extern "C" {
 #define lua_freeline(L,b)	((void)L, linenoiseFree(b))
 #endif				/* } */
 
+size_t esp_lua_read(char *ptr, size_t len);
+
+size_t esp_lua_write(char *ptr, size_t len);
+
+int esp_lua_fflush();
+
+int esp_lua_printf(const char *fmt, ...);
+
+int esp_lua_putc(int c);
+
 int esp_lua_system(const char * string);
 
 void (*esp_lua_signal(int sig, void (*func)(int)))(int);

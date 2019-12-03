@@ -116,54 +116,7 @@
 #include <sys/fcntl.h>
 #include <unistd.h>
 #include "linenoise.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
-extern FILE *fin;
-extern FILE *fout;
-extern FILE *ferr;
-extern int exit_flag;
-
-#define fread(str, size, n, f)  fread_block(str, size, n, f)
-#define fgetc(f)  fgetc_block(f)
-
-size_t fread_block(void *ptr, size_t size, size_t n, FILE *f)
-{
-    int x = 0;
-    int c = 0;
-    char *str = (char *)ptr;
-
-    if (str == NULL || f == NULL || size * n == 0) {
-        return 0;
-    }
-
-    // Block until the corresponding number of characters is obtained
-    for (x = 0; x < size * n;) {
-        if ((c = getc(f)) != EOF) {
-            str[x++] = (char)c;
-        } else if (exit_flag > 0) {
-            printf("test\n");
-            str[0] = 3;
-            exit_flag = 0;
-            return 1; 
-        } else {
-            vTaskDelay(10 / portTICK_RATE_MS);
-        }
-    }
-    str[x] = '\0';
-
-    return x;
-}
-
-int	fgetc_block(FILE *f) 
-{
-    char *str[2] = {0};
-
-    if (fread_block(str, sizeof(char), 1, f) == 0) {
-        return 0;
-    }
-    return (int)str[0];
-}
+#include "esp_lua_port.h"
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 4096
@@ -259,11 +212,11 @@ static int getCursorPosition(void) {
     unsigned int i = 0;
 
     /* Report cursor location */
-    fprintf(fout, "\x1b[6n");
+    esp_lua_printf("\x1b[6n");
 
     /* Read the response: ESC [ rows ; cols R */
     while (i < sizeof(buf)-1) {
-        if (fread(buf+i, 1, 1, fin) != 1) break;
+        if (esp_lua_read(buf+i, 1) != 1) break;
         if (buf[i] == 'R') break;
         i++;
     }
@@ -284,7 +237,7 @@ static int getColumns(void) {
     if (start == -1) goto failed;
 
     /* Go to right margin and get position. */
-    if (fwrite("\x1b[999C", 1, 6, fout) != 6) goto failed;
+    if (esp_lua_write("\x1b[999C", 6) != 6) goto failed;
     cols = getCursorPosition();
     if (cols == -1) goto failed;
 
@@ -292,7 +245,7 @@ static int getColumns(void) {
     if (cols > start) {
         char seq[32];
         snprintf(seq,32,"\x1b[%dD",cols-start);
-        if (fwrite(seq, 1, strlen(seq), fout) == -1) {
+        if (esp_lua_write(seq, strlen(seq)) == -1) {
             /* Can't recover... */
         }
     }
@@ -304,13 +257,13 @@ failed:
 
 /* Clear the screen. Used to handle ctrl+l */
 void linenoiseClearScreen(void) {
-    fprintf(fout,"\x1b[H\x1b[2J");
+    esp_lua_printf("\x1b[H\x1b[2J");
 }
 
 /* Beep, used for completion when there is nothing to complete or when all
  * the choices were already shown. */
 static void linenoiseBeep(void) {
-    fprintf(fout, "\x7");
+    esp_lua_printf("\x7");
 }
 
 /* ============================== Completion ================================ */
@@ -356,7 +309,7 @@ static int completeLine(struct linenoiseState *ls) {
                 refreshLine(ls);
             }
 
-            nread = fread(&c, 1, 1, fin);
+            nread = esp_lua_read(&c, 1);
             if (nread <= 0) {
                 freeCompletions(&lc);
                 return -1;
@@ -514,7 +467,7 @@ static void refreshSingleLine(struct linenoiseState *l) {
     /* Move cursor to original position. */
     snprintf(seq,64,"\r\x1b[%dC", (int)(pos+plen));
     abAppend(&ab,seq,strlen(seq));
-    if (fwrite(ab.b, ab.len, 1, fout) == -1) {} /* Can't recover from write error. */
+    if (esp_lua_write(ab.b, ab.len) == -1) {} /* Can't recover from write error. */
     abFree(&ab);
 }
 
@@ -601,7 +554,7 @@ static void refreshMultiLine(struct linenoiseState *l) {
     lndebug("\n");
     l->oldpos = l->pos;
 
-    if (fwrite(ab.b,ab.len,1,fout) == -1) {} /* Can't recover from write error. */
+    if (esp_lua_write(ab.b,ab.len) == -1) {} /* Can't recover from write error. */
     abFree(&ab);
 }
 
@@ -627,7 +580,7 @@ int linenoiseEditInsert(struct linenoiseState *l, char c) {
             if ((!mlmode && l->plen+l->len < l->cols && !hintsCallback)) {
                 /* Avoid a full update of the line in the
                  * trivial case. */
-                if (fwrite(&c,1,1,fout) == -1) return -1;
+                if (esp_lua_write(&c,1) == -1) return -1;
             } else {
                 refreshLine(l);
             }
@@ -772,7 +725,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     linenoiseHistoryAdd("");
 
     int pos1 = getCursorPosition();
-    if (fwrite(prompt,l.plen,1,fout) == -1) return -1;
+    if (esp_lua_write(prompt,l.plen) == -1) return -1;
     int pos2 = getCursorPosition();
     if (pos1 >= 0 && pos2 >= 0) {
         l.plen = pos2 - pos1;
@@ -782,7 +735,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
         int nread;
         char seq[3];
 
-        nread = fread(&c, 1, 1, fin);
+        nread = esp_lua_read(&c, 1);
         if (nread <= 0) return l.len;
 
         /* Only autocomplete when the callback is set. It returns < 0 when
@@ -852,13 +805,13 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             break;
         case ESC:    /* escape sequence */
             /* Read the next two bytes representing the escape sequence. */
-            if (fread(seq, 1, 2, fin) < 2) break;
+            if (esp_lua_read(seq, 2) < 2) break;
 
             /* ESC [ sequences. */
             if (seq[0] == '[') {
                 if (seq[1] >= '0' && seq[1] <= '9') {
                     /* Extended escape, read additional byte. */
-                    if (fread(seq+2, 1, 1, fin) == -1) break;
+                    if (esp_lua_read(seq+2, 1) == -1) break;
                     if (seq[2] == '~') {
                         switch(seq[1]) {
                         case '3': /* Delete key. */
@@ -929,9 +882,9 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             linenoiseEditDeletePrevWord(&l);
             break;
         }
-        if (__fbufsize(fout) > 0) {
-            fflush(fout);
-        }
+        // if (__fbufsize(stdout) > 0) {
+        //     fflush(stdout);
+        // }
     }
     return l.len;
 }
@@ -942,23 +895,23 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 void linenoisePrintKeyCodes(void) {
     char quit[4];
 
-    fprintf(fout, "Linenoise key codes debugging mode.\n"
+    esp_lua_printf("Linenoise key codes debugging mode.\n"
             "Press keys to see scan codes. Type 'quit' at any time to exit.\n");
     memset(quit,' ',4);
     while(1) {
         char c;
         int nread;
 
-        nread = fread(&c, sizeof(char), 1, fin);
+        nread = esp_lua_read(&c, 1);
         if (nread <= 0) continue;
         memmove(quit,quit+1,sizeof(quit)-1); /* shift string to left. */
         quit[sizeof(quit)-1] = c; /* Insert current char on the right. */
         if (memcmp(quit,"quit",sizeof(quit)) == 0) break;
 
-        fprintf(fout, "'%c' %02x (%d) (type quit to exit)\n",
+        esp_lua_printf("'%c' %02x (%d) (type quit to exit)\n",
             isprint(c) ? c : '?', (int)c, (int)c);
-        fprintf(fout, "\r"); /* Go left edge manually, we are in raw mode. */
-        fflush(fout);
+        esp_lua_printf("\r"); /* Go left edge manually, we are in raw mode. */
+        // fflush(stdout);
     }
 }
 
@@ -971,16 +924,17 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     }
 
     count = linenoiseEdit(buf, buflen, prompt);
-    fputc('\n', fout);
+    esp_lua_putc('\n');
     return count;
 }
 
 static int linenoiseDumb(char* buf, size_t buflen, const char* prompt) {
     /* dumb terminal, fall back to fgets */
-    fputs(prompt, fout);
+    esp_lua_printf(prompt);
     int count = 0;
     while (count < buflen) {
-        int c = fgetc(fin);
+        char c = '\0';
+        esp_lua_read(&c, 1);
         if (c == '\n') {
             break;
         } else if (c >= 0x1c && c <= 0x1f){
@@ -990,14 +944,14 @@ static int linenoiseDumb(char* buf, size_t buflen, const char* prompt) {
                 buf[count - 1] = 0;
                 count --;
             }
-            fputs("\x08 ", fout); /* Windows CMD: erase symbol under cursor */
+            esp_lua_printf("\x08 "); /* Windows CMD: erase symbol under cursor */
         } else {
             buf[count] = c;
             ++count;
         }
-        fputc(c, fout); /* echo */
+        esp_lua_putc(c); /* echo */
     }
-    fputc('\n', fout);
+    esp_lua_putc('\n');
     return count;
 }
 

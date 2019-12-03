@@ -10,7 +10,11 @@ extern "C" {
 #include "lualib.h"
 #include "lauxlib.h"
 
-void esp_lua_init(FILE *in, FILE *out, FILE *err, const luaL_Reg *libs);
+typedef size_t (*esp_lua_output_callback_t)(char* str, size_t len);
+
+size_t esp_lua_input(char* str, size_t len);
+
+void esp_lua_init(esp_lua_output_callback_t output_cb, const luaL_Reg *libs, const char *history);
 
 int esp_lua_main(int argc, char **argv);
 

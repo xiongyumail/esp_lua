@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdio.h>
-#include "esp_lua_port.h"
 
 #ifdef __cplusplus
 extern "C" {

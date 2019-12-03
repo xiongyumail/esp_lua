@@ -1,5 +1,4 @@
-set(COMPONENT_SRCS esp_lua.c
-                   src/lapi.c
+set(COMPONENT_SRCS src/lapi.c
                    src/lbaselib.c
                    src/lcode.c
                    src/lctype.c
@@ -32,7 +31,8 @@ set(COMPONENT_SRCS esp_lua.c
                    src/lundump.c
                    src/lvm.c
                    src/lua.c
-                   linenoise/linenoise.c)
+                   linenoise/linenoise.c
+                   esp_lua.c)
 
 set(COMPONENT_ADD_INCLUDEDIRS src include linenoise)
 

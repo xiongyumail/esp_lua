@@ -48,33 +48,27 @@ void esp_luaL_openlibs(lua_State *L)
 
 static size_t esp_lua_input_callback_default(char *str, size_t len) 
 {
-    char c[LUA_MAXINPUT] = {0};
-    size_t ret = 0;
-    if ((ret = fread(c, sizeof(char), LUA_MAXINPUT, stdin)) > 0) {
-        memcpy(str, c, ret);
-    }
-    return ret;
+    return fread(str, sizeof(char), len, stdin);
 }
 
 static size_t esp_lua_output_callback_default(char *str, size_t len) 
 {
-    size_t ret = 0;
-    ret = fwrite(str, sizeof(char), len, stdout);
-    return ret;
+    return fwrite(str, sizeof(char), len, stdout);
 }
 
 size_t esp_lua_read(char *ptr, size_t len)
 {
     size_t ret = 0;
     size_t x = 0;
-    char str[LUA_MAXINPUT] = {0};
 
     if (ptr == NULL) {
         return 0;
     }
     
+    char *str = (char *)calloc(1, len + 1);
     for (x = 0; x < len;) {
         if (exit_flag) { /* Ctrl-c */
+            free(str);
             ptr[0] = 3;
             exit_flag = 0;
             return 1;
@@ -85,6 +79,7 @@ size_t esp_lua_read(char *ptr, size_t len)
             x += ret;
         }
     }
+    free(str);
     ptr[x] = '\0';
     
     return x;
@@ -102,12 +97,13 @@ size_t esp_lua_write(char *ptr, size_t len)
 int esp_lua_printf(const char *fmt, ...)
 {
     int ret = 0;
-    char str[LUA_MAXINPUT] = {0};
+    char *str = (char *)calloc(1, LUA_MAXINPUT + 1);
     va_list arg_list;
     va_start(arg_list, fmt);
     vsnprintf(str, LUA_MAXINPUT, fmt, arg_list);
     va_end(arg_list);
     ret = esp_lua_write((void *)str, strlen(str));
+    free(str);
 
     return ret;
 }
@@ -144,12 +140,13 @@ void esp_lua_writeline(void)
 
 void esp_lua_writestringerror(const char *fmt, ...)
 {
-    char str[LUA_MAXINPUT] = {0};
+    char *str = (char *)calloc(1, LUA_MAXINPUT + 1);
     va_list arg_list;
     va_start(arg_list, fmt);
     vsnprintf(str, LUA_MAXINPUT, fmt, arg_list); // I don't know why vfprintf(fout...) can't use when fout != stderr.
     va_end(arg_list);
     esp_lua_printf(str);
+    free(str);
 }
 
 void esp_lua_completion_callback(const char *buf, linenoiseCompletions *lc) {

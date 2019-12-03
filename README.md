@@ -61,19 +61,12 @@ static const luaL_Reg mylibs[] = {
 
 size_t esp_lua_input_callback(char *str, size_t len) 
 {
-    char c[128] = {0};
-    size_t ret = 0;
-    if ((ret = fread(c, sizeof(char), 128, stdin)) > 0) {
-        memcpy(str, c, ret);
-    }
-    return ret;
+    return fread(str, sizeof(char), len, stdin);
 }
 
 size_t esp_lua_output_callback(char *str, size_t len) 
 {
-    size_t ret = 0;
-    ret = fwrite(str, sizeof(char), len, stdout);
-    return ret;
+    return fwrite(str, sizeof(char), len, stdout);
 }
 
 

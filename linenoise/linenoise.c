@@ -765,7 +765,6 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             }
             return (int)l.len;
         case CTRL_C:     /* ctrl-c */
-        printf("afafba\n");
             errno = EAGAIN;
             return -1;
         case BACKSPACE:   /* backspace */

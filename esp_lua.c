@@ -4,7 +4,6 @@
 #include <stdarg.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "linenoise.h"
 #include "esp_lua.h"
 
 static int exit_flag = 0;
@@ -166,6 +165,11 @@ char *esp_lua_hints_callback(const char *buf, int *color, int *bold) {
     return NULL;
 }
 
+void esp_lua_set_dumb_mode(int mode)
+{
+    linenoiseSetDumbMode(mode);
+}
+
 void esp_lua_init(esp_lua_callback_t input_cb, esp_lua_callback_t output_cb, const luaL_Reg *libs)
 {
     esp_lua_libs = (luaL_Reg *)libs;
@@ -178,10 +182,10 @@ void esp_lua_init(esp_lua_callback_t input_cb, esp_lua_callback_t output_cb, con
 
     if (output_cb == NULL) {
         esp_lua_output_cb = esp_lua_output_callback_default;
-        linenoiseSetDumbMode(0);
+        esp_lua_set_dumb_mode(0);
     } else {
         esp_lua_output_cb = output_cb;
-        linenoiseSetDumbMode(1);
+        esp_lua_set_dumb_mode(1);
     }
     linenoiseSetMultiLine(1);
     linenoiseSetCompletionCallback(esp_lua_completion_callback);

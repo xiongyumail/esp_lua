@@ -6,6 +6,10 @@ Very pure Lua library, I only added the `esp_lua_port.h` header file to `luaconf
 
 ## How to use
 
+Currently, it is running normally in `ESP8266`, `ESP32` and `ESP32S2`.
+
+It should be noted that esp8266 needs to turn on `VFS` function in menuconfig.
+
 ```bash
 cd [project path]/components
 git submodule add https://github.com/xiongyumail/esp_lua

@@ -157,9 +157,10 @@ enum KEY_ACTION{
 	CTRL_F = 6,         /* Ctrl-f */
 	CTRL_H = 8,         /* Ctrl-h */
 	TAB = 9,            /* Tab */
+    ENTER_LF = 10,      /* Enter LF */
 	CTRL_K = 11,        /* Ctrl+k */
 	CTRL_L = 12,        /* Ctrl+l */
-	ENTER = 10,         /* Enter */
+	ENTER_CR = 13,      /* Enter CR*/
 	CTRL_N = 14,        /* Ctrl-n */
 	CTRL_P = 16,        /* Ctrl-p */
 	CTRL_T = 20,        /* Ctrl-t */
@@ -751,7 +752,8 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
         }
         
         switch(c) {
-        case ENTER:    /* enter */
+        case ENTER_LF:    /* enter LF*/
+        case ENTER_CR:    /* enter CR*/
             history_len--;
             free(history[history_len]);
             if (mlmode) linenoiseEditMoveEnd(&l);
@@ -907,8 +909,7 @@ void linenoisePrintKeyCodes(void) {
         quit[sizeof(quit)-1] = c; /* Insert current char on the right. */
         if (memcmp(quit,"quit",sizeof(quit)) == 0) break;
 
-        esp_lua_printf("'%c' %02x (%d) (type quit to exit)\n",
-            isprint(c) ? c : '?', (int)c, (int)c);
+        esp_lua_printf("'%c' %02x (%d) (type quit to exit)\n", c, (int)c, (int)c);
         esp_lua_printf("\r"); /* Go left edge manually, we are in raw mode. */
         // fflush(stdout);
     }
@@ -934,7 +935,7 @@ static int linenoiseDumb(char* buf, size_t buflen, const char* prompt) {
     while (count < buflen) {
         char c = '\0';
         esp_lua_read(&c, 1);
-        if (c == '\n') {
+        if (c == ENTER_LF || c == ENTER_CR) {
             break;
         } else if (c == CTRL_C || c == CTRL_D) { // exit
             break;

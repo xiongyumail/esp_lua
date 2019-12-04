@@ -1,40 +1,42 @@
-COMPONENT_SRCS :=  esp_lua.c \
-                   lua/lapi.c \
-                   lua/lbaselib.c \
-                   lua/lcode.c \
-                   lua/lctype.c \
-                   lua/ldebug.c \
-                   lua/ldump.c \
-                   lua/lgc.c \
-                   lua/liolib.c \
-                   lua/lmathlib.c \
-                   lua/loadlib.c \
-                   lua/lopcodes.c \
-                   lua/lparser.c \
-                   lua/lstring.c \
-                   lua/ltable.c \
-                   lua/ltm.c \
-                   lua/lutf8lib.c \
-                   lua/lzio.c \
-                   lua/lauxlib.c \
-                   lua/lbitlib.c \
-                   lua/lcorolib.c \
-                   lua/ldblib.c \
-                   lua/ldo.c \
-                   lua/lfunc.c \
-                   lua/llex.c \
-                   lua/lmem.c \
-                   lua/lobject.c \
-                   lua/loslib.c \
-                   lua/lstate.c \
-                   lua/lstrlib.c \
-                   lua/ltablib.c \
-                   lua/lundump.c \
-                   lua/lvm.c \
-                   lua/lua.c
+COMPONENT_OBJS :=  lua/lapi.o \
+                   lua/lbaselib.o \
+                   lua/lcode.o \
+                   lua/lctype.o \
+                   lua/ldebug.o \
+                   lua/ldump.o \
+                   lua/lgc.o \
+                   lua/liolib.o \
+                   lua/lmathlib.o \
+                   lua/loadlib.o \
+                   lua/lopcodes.o \
+                   lua/lparser.o \
+                   lua/lstring.o \
+                   lua/ltable.o \
+                   lua/ltm.o \
+                   lua/lutf8lib.o \
+                   lua/lzio.o \
+                   lua/lauxlib.o \
+                   lua/lbitlib.o \
+                   lua/lcorolib.o \
+                   lua/ldblib.o \
+                   lua/ldo.o \
+                   lua/lfunc.o \
+                   lua/llex.o \
+                   lua/lmem.o \
+                   lua/lobject.o \
+                   lua/loslib.o \
+                   lua/lstate.o \
+                   lua/lstrlib.o \
+                   lua/ltablib.o \
+                   lua/lundump.o \
+                   lua/lvm.o \
+                   lua/lua.o \
+                   linenoise/linenoise.o \
+                   esp_lua.o
 
-COMPONENT_ADD_INCLUDEDIRS := lua \
-                             include
+COMPONENT_SRCDIRS := lua linenoise .
 
-CFLAGS += -DLUA_USE_IDF -DLUA_USE_C89 -DLUA_COMPAT_MATHLIB
+COMPONENT_ADD_INCLUDEDIRS := lua include linenoise
+
+CFLAGS += -DLUA_USE_IDF -DLUA_USE_C89 -DLUA_COMPAT_MATHLIB 
 CFLAGS += -Dmain=lua_main

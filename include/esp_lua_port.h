@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdio.h>
+#include "freertos/FreeRTOS.h"
 
 #ifdef __cplusplus
 extern "C" {

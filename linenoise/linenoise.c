@@ -933,12 +933,53 @@ static int linenoiseDumb(char* buf, size_t buflen, const char* prompt) {
     esp_lua_printf(prompt);
     int count = 0;
     while (count < buflen) {
+        char seq[3];
         char c = '\0';
         esp_lua_read(&c, 1);
         if (c == ENTER_LF || c == ENTER_CR) {
             break;
         } else if (c == CTRL_C || c == CTRL_D) { // exit
             break;
+        } else if (c == ESC) {
+            /* Read the next two bytes representing the escape sequence. */
+            if (esp_lua_read(seq, 2) < 2) break;
+
+            /* ESC [ sequences. */
+            if (seq[0] == '[') {
+                if (seq[1] >= '0' && seq[1] <= '9') {
+                    /* Extended escape, read additional byte. */
+                    if (esp_lua_read(seq+2, 1) == -1) break;
+                    if (seq[2] == '~') {
+                        switch(seq[1]) {
+                        case '3': /* Delete key. */
+                            break;
+                        }
+                    }
+                } else {
+                    switch(seq[1]) {
+                    case 'A': /* Up */
+                        break;
+                    case 'B': /* Down */
+                        break;
+                    case 'C': /* Right */
+                        break;
+                    case 'D': /* Left */
+                        break;
+                    case 'H': /* Home */
+                        break;
+                    case 'F': /* End*/
+                        break;
+                    }
+                }
+            } else if (seq[0] == 'O') { /* ESC O sequences. */
+                switch(seq[1]) {
+                case 'H': /* Home */
+                    break;
+                case 'F': /* End*/
+                    break;
+                }
+            }
+            continue;
         } else if (c >= 0x1c && c <= 0x1f){
             continue; /* consume arrow keys */
         } else if (c == BACKSPACE || c == 0x8) {

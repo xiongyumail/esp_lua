@@ -27,6 +27,11 @@ extern "C" {
 #define exit(status) esp_lua_exit(status)
 #endif
 
+// #if !defined(lua_lock)
+// #define lua_lock(L)	esp_lua_lock()
+// #define lua_unlock(L)	esp_lua_unlock()
+// #endif
+
 /* print a string */
 #if !defined(lua_writestring)
 #define lua_writestring(s,l)   esp_lua_writestring(s,l)
@@ -64,6 +69,10 @@ int esp_lua_system(const char * string);
 void (*esp_lua_signal(int sig, void (*func)(int)))(int);
 
 void esp_lua_exit(int status);
+
+void esp_lua_lock(void);
+
+void esp_lua_unlock(void);
 
 size_t esp_lua_writestring(const char *str, size_t size);
 

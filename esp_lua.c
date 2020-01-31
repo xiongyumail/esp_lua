@@ -4,12 +4,14 @@
 #include <stdarg.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "esp_lua.h"
 
 static int exit_flag = 0;
 static luaL_Reg *esp_lua_libs = NULL;
 static esp_lua_callback_t esp_lua_input_cb = NULL;
 static esp_lua_callback_t esp_lua_output_cb = NULL;
+static SemaphoreHandle_t esp_lua_mux = NULL;
 
 static const luaL_Reg loadedlibs[] = {
   {"_G", luaopen_base},
@@ -127,6 +129,16 @@ void esp_lua_exit(int status)
     exit_flag = 1;
 }
 
+void esp_lua_lock(void)
+{
+    xSemaphoreTake(esp_lua_mux, portMAX_DELAY);
+}
+
+void esp_lua_unlock(void)
+{
+    xSemaphoreGive(esp_lua_mux);
+}
+
 size_t esp_lua_writestring(const char *str, size_t size)
 {
     return esp_lua_write((const void *)str, size);
@@ -191,6 +203,7 @@ void esp_lua_init(esp_lua_callback_t input_cb, esp_lua_callback_t output_cb, con
     linenoiseSetCompletionCallback(esp_lua_completion_callback);
     linenoiseSetHintsCallback(esp_lua_hints_callback);
     // linenoisePrintKeyCodes();
+    esp_lua_mux = xSemaphoreCreateMutex();
 }
 
 int esp_lua_main(int argc, char **argv)

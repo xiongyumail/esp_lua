@@ -7,7 +7,6 @@
 #include "freertos/semphr.h"
 #include "esp_lua.h"
 
-static int exit_flag = 0;
 static luaL_Reg *esp_lua_libs = NULL;
 static esp_lua_callback_t esp_lua_input_cb = NULL;
 static esp_lua_callback_t esp_lua_output_cb = NULL;
@@ -68,12 +67,7 @@ size_t esp_lua_read(char *ptr, size_t len)
     
     char *str = (char *)calloc(1, len + 1);
     for (x = 0; x < len;) {
-        if (exit_flag) { /* Ctrl-c */
-            free(str);
-            ptr[0] = 3;
-            exit_flag = 0;
-            return 1;
-        } else if ((ret = esp_lua_input_cb(str, len - x)) == 0) {
+        if ((ret = esp_lua_input_cb(str, len - x)) == 0) {
             vTaskDelay(10 / portTICK_RATE_MS);
         } else {
             memcpy(&ptr[x], str, ret);
@@ -126,7 +120,7 @@ void (*esp_lua_signal(int sig, void (*func)(int)))(int)
 
 void esp_lua_exit(int status)
 {
-    exit_flag = 1;
+    linenoiseExit();
 }
 
 void esp_lua_lock(void)
@@ -211,7 +205,6 @@ int esp_lua_main(int argc, char **argv)
     int ret = 0;
     extern int lua_main (int argc, char **argv);
 
-    exit_flag = 0;
     linenoiseClearScreen();
     linenoiseHistoryLoad(ESP_LUA_HISTORY_PATH);
     ret = lua_main (argc, argv);

@@ -130,6 +130,7 @@ static int dumbmode = 0; /* Dumb mode where line editing is disabled. Off by def
 static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 static int history_len = 0;
 static char **history = NULL;
+static int exit_flag = 0; /* linenoise will return NULL when exit_flag equal 1 */
 
 /* The linenoiseState structure represents the state during line editing.
  * We pass this state to functions implementing specific editing
@@ -1013,6 +1014,10 @@ static void sanitize(char* src) {
 
 /* The high level function that is the main API of the linenoise library. */
 char *linenoise(const char *prompt) {
+    if (exit_flag) {
+        exit_flag = 0;
+        return NULL;
+    }
     char *buf = calloc(1, LINENOISE_MAX_LINE);
     int count = 0;
     if (!dumbmode) {
@@ -1029,6 +1034,10 @@ char *linenoise(const char *prompt) {
         return NULL;
     }
     return buf;
+}
+
+void linenoiseExit(void) {
+    exit_flag = 1;
 }
 
 /* This is just a wrapper the user may want to call in order to make sure

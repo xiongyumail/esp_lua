@@ -940,7 +940,7 @@ static int linenoiseDumb(char* buf, size_t buflen, const char* prompt) {
         if (c == ENTER_LF || c == ENTER_CR) {
             break;
         } else if (c == CTRL_C || c == CTRL_D) { // exit
-            break;
+            return -1;
         } else if (c == ESC) {
             /* Read the next two bytes representing the escape sequence. */
             if (esp_lua_read(seq, 2) < 2) break;

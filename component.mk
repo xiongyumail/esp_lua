@@ -31,12 +31,12 @@ COMPONENT_OBJS :=  lua/lapi.o \
                    lua/lundump.o \
                    lua/lvm.o \
                    lua/lua.o \
-                   linenoise/linenoise.o \
+                   lua_linenoise/lua_linenoise.o \
                    esp_lua.o
 
-COMPONENT_SRCDIRS := lua linenoise .
+COMPONENT_SRCDIRS := lua lua_linenoise .
 
-COMPONENT_ADD_INCLUDEDIRS := lua include linenoise
+COMPONENT_ADD_INCLUDEDIRS := lua include lua_linenoise
 
 CFLAGS += -DLUA_USE_IDF -DLUA_USE_C89 -DLUA_COMPAT_MATHLIB 
 CFLAGS += -Dmain=lua_main

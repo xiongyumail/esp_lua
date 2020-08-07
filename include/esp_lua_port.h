@@ -48,10 +48,10 @@ extern "C" {
 #endif
 
 #if !defined(lua_readline)	/* { */
-#include "linenoise.h"
-#define lua_readline(L,b,p)	((void)L, ((b)=linenoise(p)) != NULL)
-#define lua_saveline(L,line)	((void)L, linenoiseHistoryAdd(line))
-#define lua_freeline(L,b)	((void)L, linenoiseFree(b))
+#include "lua_linenoise.h"
+#define lua_readline(L,b,p)	((void)L, ((b)=lua_linenoise(p)) != NULL)
+#define lua_saveline(L,line)	((void)L, lua_linenoiseHistoryAdd(line))
+#define lua_freeline(L,b)	((void)L, lua_linenoiseFree(b))
 #endif				/* } */
 
 size_t esp_lua_read(char *ptr, size_t len);

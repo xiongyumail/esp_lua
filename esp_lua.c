@@ -120,7 +120,7 @@ void (*esp_lua_signal(int sig, void (*func)(int)))(int)
 
 void esp_lua_exit(int status)
 {
-    linenoiseExit();
+    lua_linenoiseExit();
 }
 
 void esp_lua_lock(void)
@@ -154,11 +154,11 @@ void esp_lua_writestringerror(const char *fmt, ...)
     free(str);
 }
 
-void esp_lua_completion_callback(const char *buf, linenoiseCompletions *lc) {
+void esp_lua_completion_callback(const char *buf, lua_linenoiseCompletions *lc) {
     if (!strcasecmp(buf,"esp")) {
-        linenoiseAddCompletion(lc,"esp8266");
-        linenoiseAddCompletion(lc,"esp32");
-        linenoiseAddCompletion(lc,"esp32s2");
+        lua_linenoiseAddCompletion(lc,"esp8266");
+        lua_linenoiseAddCompletion(lc,"esp32");
+        lua_linenoiseAddCompletion(lc,"esp32s2");
     }
 }
 
@@ -173,7 +173,7 @@ char *esp_lua_hints_callback(const char *buf, int *color, int *bold) {
 
 void esp_lua_set_dumb_mode(int mode)
 {
-    linenoiseSetDumbMode(mode);
+    lua_linenoiseSetDumbMode(mode);
 }
 
 void esp_lua_init(esp_lua_callback_t input_cb, esp_lua_callback_t output_cb, const luaL_Reg *libs)
@@ -193,10 +193,10 @@ void esp_lua_init(esp_lua_callback_t input_cb, esp_lua_callback_t output_cb, con
         esp_lua_output_cb = output_cb;
         esp_lua_set_dumb_mode(1);
     }
-    linenoiseSetMultiLine(1);
-    linenoiseSetCompletionCallback(esp_lua_completion_callback);
-    linenoiseSetHintsCallback(esp_lua_hints_callback);
-    // linenoisePrintKeyCodes();
+    lua_linenoiseSetMultiLine(1);
+    lua_linenoiseSetCompletionCallback(esp_lua_completion_callback);
+    lua_linenoiseSetHintsCallback(esp_lua_hints_callback);
+    // lua_linenoisePrintKeyCodes();
     esp_lua_mux = xSemaphoreCreateMutex();
 }
 
@@ -205,10 +205,10 @@ int esp_lua_main(int argc, char **argv)
     int ret = 0;
     extern int lua_main (int argc, char **argv);
 
-    linenoiseClearScreen();
-    linenoiseHistoryLoad(ESP_LUA_HISTORY_PATH);
+    lua_linenoiseClearScreen();
+    lua_linenoiseHistoryLoad(ESP_LUA_HISTORY_PATH);
     ret = lua_main (argc, argv);
-    linenoiseHistorySave(ESP_LUA_HISTORY_PATH);
+    lua_linenoiseHistorySave(ESP_LUA_HISTORY_PATH);
     
     return ret;
 }

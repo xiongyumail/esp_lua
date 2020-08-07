@@ -1,4 +1,4 @@
-/* linenoise.c -- guerrilla line editing library against the idea that a
+/* lua_linenoise.c -- guerrilla line editing library against the idea that a
  * line editing lib needs to be 20,000 lines of C code.
  *
  * You can find the latest source code at:
@@ -89,7 +89,7 @@
  *    Sequence: ESC [ n B
  *    Effect: moves cursor down of n chars.
  *
- * When linenoiseClearScreen() is called, two additional escape sequences
+ * When lua_linenoiseClearScreen() is called, two additional escape sequences
  * are used in order to clear the screen and position the cursor at home
  * position.
  *
@@ -115,27 +115,27 @@
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <unistd.h>
-#include "linenoise.h"
+#include "lua_linenoise.h"
 #include "esp_lua_port.h"
 
-#define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
-#define LINENOISE_MAX_LINE 4096
+#define lua_linenoise_DEFAULT_HISTORY_MAX_LEN 100
+#define lua_linenoise_MAX_LINE 4096
 
-static linenoiseCompletionCallback *completionCallback = NULL;
-static linenoiseHintsCallback *hintsCallback = NULL;
-static linenoiseFreeHintsCallback *freeHintsCallback = NULL;
+static lua_linenoiseCompletionCallback *completionCallback = NULL;
+static lua_linenoiseHintsCallback *hintsCallback = NULL;
+static lua_linenoiseFreeHintsCallback *freeHintsCallback = NULL;
 
 static int mlmode = 0;  /* Multi line mode. Default is single line. */
 static int dumbmode = 0; /* Dumb mode where line editing is disabled. Off by default */
-static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
+static int history_max_len = lua_linenoise_DEFAULT_HISTORY_MAX_LEN;
 static int history_len = 0;
 static char **history = NULL;
-static int exit_flag = 0; /* linenoise will return NULL when exit_flag equal 1 */
+static int exit_flag = 0; /* lua_linenoise will return NULL when exit_flag equal 1 */
 
-/* The linenoiseState structure represents the state during line editing.
+/* The lua_linenoiseState structure represents the state during line editing.
  * We pass this state to functions implementing specific editing
  * functionalities. */
-struct linenoiseState {
+struct lua_linenoiseState {
     char *buf;          /* Edited line buffer. */
     size_t buflen;      /* Edited line buffer size. */
     const char *prompt; /* Prompt to display. */
@@ -171,8 +171,8 @@ enum KEY_ACTION{
 	BACKSPACE =  127    /* Backspace */
 };
 
-int linenoiseHistoryAdd(const char *line);
-static void refreshLine(struct linenoiseState *l);
+int lua_linenoiseHistoryAdd(const char *line);
+static void refreshLine(struct lua_linenoiseState *l);
 
 /* Debugging macro. */
 #if 0
@@ -196,12 +196,12 @@ FILE *lndebug_fp = NULL;
 /* ======================= Low level terminal handling ====================== */
 
 /* Set if to use or not the multi line mode. */
-void linenoiseSetMultiLine(int ml) {
+void lua_linenoiseSetMultiLine(int ml) {
     mlmode = ml;
 }
 
 /* Set if terminal does not recognize escape sequences */
-void linenoiseSetDumbMode(int set) {
+void lua_linenoiseSetDumbMode(int set) {
     dumbmode = set;
 }
 
@@ -258,20 +258,20 @@ failed:
 }
 
 /* Clear the screen. Used to handle ctrl+l */
-void linenoiseClearScreen(void) {
+void lua_linenoiseClearScreen(void) {
     esp_lua_printf("\x1b[H\x1b[2J");
 }
 
 /* Beep, used for completion when there is nothing to complete or when all
  * the choices were already shown. */
-static void linenoiseBeep(void) {
+static void lua_linenoiseBeep(void) {
     esp_lua_printf("\x7");
 }
 
 /* ============================== Completion ================================ */
 
-/* Free a list of completion option populated by linenoiseAddCompletion(). */
-static void freeCompletions(linenoiseCompletions *lc) {
+/* Free a list of completion option populated by lua_linenoiseAddCompletion(). */
+static void freeCompletions(lua_linenoiseCompletions *lc) {
     size_t i;
     for (i = 0; i < lc->len; i++)
         free(lc->cvec[i]);
@@ -279,27 +279,27 @@ static void freeCompletions(linenoiseCompletions *lc) {
         free(lc->cvec);
 }
 
-/* This is an helper function for linenoiseEdit() and is called when the
+/* This is an helper function for lua_linenoiseEdit() and is called when the
  * user types the <tab> key in order to complete the string currently in the
  * input.
  *
- * The state of the editing is encapsulated into the pointed linenoiseState
+ * The state of the editing is encapsulated into the pointed lua_linenoiseState
  * structure as described in the structure definition. */
-static int completeLine(struct linenoiseState *ls) {
-    linenoiseCompletions lc = { 0, NULL };
+static int completeLine(struct lua_linenoiseState *ls) {
+    lua_linenoiseCompletions lc = { 0, NULL };
     int nread, nwritten;
     char c = 0;
 
     completionCallback(ls->buf,&lc);
     if (lc.len == 0) {
-        linenoiseBeep();
+        lua_linenoiseBeep();
     } else {
         size_t stop = 0, i = 0;
 
         while(!stop) {
             /* Show completion or original buffer */
             if (i < lc.len) {
-                struct linenoiseState saved = *ls;
+                struct lua_linenoiseState saved = *ls;
 
                 ls->len = ls->pos = strlen(lc.cvec[i]);
                 ls->buf = lc.cvec[i];
@@ -320,7 +320,7 @@ static int completeLine(struct linenoiseState *ls) {
             switch(c) {
                 case TAB: /* tab */
                     i = (i+1) % (lc.len+1);
-                    if (i == lc.len) linenoiseBeep();
+                    if (i == lc.len) lua_linenoiseBeep();
                     break;
                 case ESC: /* escape */
                     /* Re-show original buffer */
@@ -344,19 +344,19 @@ static int completeLine(struct linenoiseState *ls) {
 }
 
 /* Register a callback function to be called for tab-completion. */
-void linenoiseSetCompletionCallback(linenoiseCompletionCallback *fn) {
+void lua_linenoiseSetCompletionCallback(lua_linenoiseCompletionCallback *fn) {
     completionCallback = fn;
 }
 
 /* Register a hits function to be called to show hits to the user at the
  * right of the prompt. */
-void linenoiseSetHintsCallback(linenoiseHintsCallback *fn) {
+void lua_linenoiseSetHintsCallback(lua_linenoiseHintsCallback *fn) {
     hintsCallback = fn;
 }
 
 /* Register a function to free the hints returned by the hints callback
- * registered with linenoiseSetHintsCallback(). */
-void linenoiseSetFreeHintsCallback(linenoiseFreeHintsCallback *fn) {
+ * registered with lua_linenoiseSetHintsCallback(). */
+void lua_linenoiseSetFreeHintsCallback(lua_linenoiseFreeHintsCallback *fn) {
     freeHintsCallback = fn;
 }
 
@@ -364,7 +364,7 @@ void linenoiseSetFreeHintsCallback(linenoiseFreeHintsCallback *fn) {
  * in order to add completion options given the input string when the
  * user typed <tab>. See the example.c source code for a very easy to
  * understand example. */
-void linenoiseAddCompletion(linenoiseCompletions *lc, const char *str) {
+void lua_linenoiseAddCompletion(lua_linenoiseCompletions *lc, const char *str) {
     size_t len = strlen(str);
     char *copy, **cvec;
 
@@ -411,7 +411,7 @@ static void abFree(struct abuf *ab) {
 
 /* Helper of refreshSingleLine() and refreshMultiLine() to show hints
  * to the right of the prompt. */
-void refreshShowHints(struct abuf *ab, struct linenoiseState *l, int plen) {
+void refreshShowHints(struct abuf *ab, struct lua_linenoiseState *l, int plen) {
     char seq[64];
     if (hintsCallback && plen+l->len < l->cols) {
         int color = -1, bold = 0;
@@ -437,7 +437,7 @@ void refreshShowHints(struct abuf *ab, struct linenoiseState *l, int plen) {
  *
  * Rewrite the currently edited line accordingly to the buffer content,
  * cursor position, and number of columns of the terminal. */
-static void refreshSingleLine(struct linenoiseState *l) {
+static void refreshSingleLine(struct lua_linenoiseState *l) {
     char seq[64];
     size_t plen = l->plen;
     char *buf = l->buf;
@@ -477,7 +477,7 @@ static void refreshSingleLine(struct linenoiseState *l) {
  *
  * Rewrite the currently edited line accordingly to the buffer content,
  * cursor position, and number of columns of the terminal. */
-static void refreshMultiLine(struct linenoiseState *l) {
+static void refreshMultiLine(struct lua_linenoiseState *l) {
     char seq[64];
     int plen = l->plen;
     int rows = (plen+l->len+l->cols-1)/l->cols; /* rows used by current buf. */
@@ -562,7 +562,7 @@ static void refreshMultiLine(struct linenoiseState *l) {
 
 /* Calls the two low level functions refreshSingleLine() or
  * refreshMultiLine() according to the selected mode. */
-static void refreshLine(struct linenoiseState *l) {
+static void refreshLine(struct lua_linenoiseState *l) {
     if (mlmode)
         refreshMultiLine(l);
     else
@@ -572,7 +572,7 @@ static void refreshLine(struct linenoiseState *l) {
 /* Insert the character 'c' at cursor current position.
  *
  * On error writing to the terminal -1 is returned, otherwise 0. */
-int linenoiseEditInsert(struct linenoiseState *l, char c) {
+int lua_linenoiseEditInsert(struct lua_linenoiseState *l, char c) {
     if (l->len < l->buflen) {
         if (l->len == l->pos) {
             l->buf[l->pos] = c;
@@ -599,7 +599,7 @@ int linenoiseEditInsert(struct linenoiseState *l, char c) {
 }
 
 /* Move cursor on the left. */
-void linenoiseEditMoveLeft(struct linenoiseState *l) {
+void lua_linenoiseEditMoveLeft(struct lua_linenoiseState *l) {
     if (l->pos > 0) {
         l->pos--;
         refreshLine(l);
@@ -607,7 +607,7 @@ void linenoiseEditMoveLeft(struct linenoiseState *l) {
 }
 
 /* Move cursor on the right. */
-void linenoiseEditMoveRight(struct linenoiseState *l) {
+void lua_linenoiseEditMoveRight(struct lua_linenoiseState *l) {
     if (l->pos != l->len) {
         l->pos++;
         refreshLine(l);
@@ -615,7 +615,7 @@ void linenoiseEditMoveRight(struct linenoiseState *l) {
 }
 
 /* Move cursor to the start of the line. */
-void linenoiseEditMoveHome(struct linenoiseState *l) {
+void lua_linenoiseEditMoveHome(struct lua_linenoiseState *l) {
     if (l->pos != 0) {
         l->pos = 0;
         refreshLine(l);
@@ -623,7 +623,7 @@ void linenoiseEditMoveHome(struct linenoiseState *l) {
 }
 
 /* Move cursor to the end of the line. */
-void linenoiseEditMoveEnd(struct linenoiseState *l) {
+void lua_linenoiseEditMoveEnd(struct lua_linenoiseState *l) {
     if (l->pos != l->len) {
         l->pos = l->len;
         refreshLine(l);
@@ -632,16 +632,16 @@ void linenoiseEditMoveEnd(struct linenoiseState *l) {
 
 /* Substitute the currently edited line with the next or previous history
  * entry as specified by 'dir'. */
-#define LINENOISE_HISTORY_NEXT 0
-#define LINENOISE_HISTORY_PREV 1
-void linenoiseEditHistoryNext(struct linenoiseState *l, int dir) {
+#define lua_linenoise_HISTORY_NEXT 0
+#define lua_linenoise_HISTORY_PREV 1
+void lua_linenoiseEditHistoryNext(struct lua_linenoiseState *l, int dir) {
     if (history_len > 1) {
         /* Update the current history entry before to
          * overwrite it with the next one. */
         free(history[history_len - 1 - l->history_index]);
         history[history_len - 1 - l->history_index] = strdup(l->buf);
         /* Show the new entry */
-        l->history_index += (dir == LINENOISE_HISTORY_PREV) ? 1 : -1;
+        l->history_index += (dir == lua_linenoise_HISTORY_PREV) ? 1 : -1;
         if (l->history_index < 0) {
             l->history_index = 0;
             return;
@@ -658,7 +658,7 @@ void linenoiseEditHistoryNext(struct linenoiseState *l, int dir) {
 
 /* Delete the character at the right of the cursor without altering the cursor
  * position. Basically this is what happens with the "Delete" keyboard key. */
-void linenoiseEditDelete(struct linenoiseState *l) {
+void lua_linenoiseEditDelete(struct lua_linenoiseState *l) {
     if (l->len > 0 && l->pos < l->len) {
         memmove(l->buf+l->pos,l->buf+l->pos+1,l->len-l->pos-1);
         l->len--;
@@ -668,7 +668,7 @@ void linenoiseEditDelete(struct linenoiseState *l) {
 }
 
 /* Backspace implementation. */
-void linenoiseEditBackspace(struct linenoiseState *l) {
+void lua_linenoiseEditBackspace(struct lua_linenoiseState *l) {
     if (l->pos > 0 && l->len > 0) {
         memmove(l->buf+l->pos-1,l->buf+l->pos,l->len-l->pos);
         l->pos--;
@@ -680,7 +680,7 @@ void linenoiseEditBackspace(struct linenoiseState *l) {
 
 /* Delete the previosu word, maintaining the cursor at the start of the
  * current word. */
-void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
+void lua_linenoiseEditDeletePrevWord(struct lua_linenoiseState *l) {
     size_t old_pos = l->pos;
     size_t diff;
 
@@ -694,7 +694,7 @@ void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
     refreshLine(l);
 }
 
-/* This function is the core of the line editing capability of linenoise.
+/* This function is the core of the line editing capability of lua_linenoise.
  * It expects 'fd' to be already in "raw mode" so that every key pressed
  * will be returned ASAP to read().
  *
@@ -702,11 +702,11 @@ void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
  * when ctrl+d is typed.
  *
  * The function returns the length of the current buffer. */
-static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
+static int lua_linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 {
-    struct linenoiseState l;
+    struct lua_linenoiseState l;
 
-    /* Populate the linenoise state that we pass to functions implementing
+    /* Populate the lua_linenoise state that we pass to functions implementing
      * specific editing functionalities. */
     l.buf = buf;
     l.buflen = buflen;
@@ -724,7 +724,7 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
 
     /* The latest history entry is always our current buffer, that
      * initially is just an empty string. */
-    linenoiseHistoryAdd("");
+    lua_linenoiseHistoryAdd("");
 
     int pos1 = getCursorPosition();
     if (esp_lua_write(prompt,l.plen) == -1) return -1;
@@ -757,11 +757,11 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
         case ENTER_CR:    /* enter CR*/
             history_len--;
             free(history[history_len]);
-            if (mlmode) linenoiseEditMoveEnd(&l);
+            if (mlmode) lua_linenoiseEditMoveEnd(&l);
             if (hintsCallback) {
                 /* Force a refresh without hints to leave the previous
                  * line as the user typed it after a newline. */
-                linenoiseHintsCallback *hc = hintsCallback;
+                lua_linenoiseHintsCallback *hc = hintsCallback;
                 hintsCallback = NULL;
                 refreshLine(&l);
                 hintsCallback = hc;
@@ -772,12 +772,12 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             return -1;
         case BACKSPACE:   /* backspace */
         case 8:     /* ctrl-h */
-            linenoiseEditBackspace(&l);
+            lua_linenoiseEditBackspace(&l);
             break;
         case CTRL_D:     /* ctrl-d, remove char at right of cursor, or if the
                             line is empty, act as end-of-file. */
             if (l.len > 0) {
-                linenoiseEditDelete(&l);
+                lua_linenoiseEditDelete(&l);
             } else {
                 history_len--;
                 free(history[history_len]);
@@ -794,16 +794,16 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             }
             break;
         case CTRL_B:     /* ctrl-b */
-            linenoiseEditMoveLeft(&l);
+            lua_linenoiseEditMoveLeft(&l);
             break;
         case CTRL_F:     /* ctrl-f */
-            linenoiseEditMoveRight(&l);
+            lua_linenoiseEditMoveRight(&l);
             break;
         case CTRL_P:    /* ctrl-p */
-            linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_PREV);
+            lua_linenoiseEditHistoryNext(&l, lua_linenoise_HISTORY_PREV);
             break;
         case CTRL_N:    /* ctrl-n */
-            linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_NEXT);
+            lua_linenoiseEditHistoryNext(&l, lua_linenoise_HISTORY_NEXT);
             break;
         case ESC:    /* escape sequence */
             /* Read the next two bytes representing the escape sequence. */
@@ -817,29 +817,29 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
                     if (seq[2] == '~') {
                         switch(seq[1]) {
                         case '3': /* Delete key. */
-                            linenoiseEditDelete(&l);
+                            lua_linenoiseEditDelete(&l);
                             break;
                         }
                     }
                 } else {
                     switch(seq[1]) {
                     case 'A': /* Up */
-                        linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_PREV);
+                        lua_linenoiseEditHistoryNext(&l, lua_linenoise_HISTORY_PREV);
                         break;
                     case 'B': /* Down */
-                        linenoiseEditHistoryNext(&l, LINENOISE_HISTORY_NEXT);
+                        lua_linenoiseEditHistoryNext(&l, lua_linenoise_HISTORY_NEXT);
                         break;
                     case 'C': /* Right */
-                        linenoiseEditMoveRight(&l);
+                        lua_linenoiseEditMoveRight(&l);
                         break;
                     case 'D': /* Left */
-                        linenoiseEditMoveLeft(&l);
+                        lua_linenoiseEditMoveLeft(&l);
                         break;
                     case 'H': /* Home */
-                        linenoiseEditMoveHome(&l);
+                        lua_linenoiseEditMoveHome(&l);
                         break;
                     case 'F': /* End*/
-                        linenoiseEditMoveEnd(&l);
+                        lua_linenoiseEditMoveEnd(&l);
                         break;
                     }
                 }
@@ -849,16 +849,16 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             else if (seq[0] == 'O') {
                 switch(seq[1]) {
                 case 'H': /* Home */
-                    linenoiseEditMoveHome(&l);
+                    lua_linenoiseEditMoveHome(&l);
                     break;
                 case 'F': /* End*/
-                    linenoiseEditMoveEnd(&l);
+                    lua_linenoiseEditMoveEnd(&l);
                     break;
                 }
             }
             break;
         default:
-            if (linenoiseEditInsert(&l,c)) return -1;
+            if (lua_linenoiseEditInsert(&l,c)) return -1;
             break;
         case CTRL_U: /* Ctrl+u, delete the whole line. */
             buf[0] = '\0';
@@ -871,17 +871,17 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
             refreshLine(&l);
             break;
         case CTRL_A: /* Ctrl+a, go to the start of the line */
-            linenoiseEditMoveHome(&l);
+            lua_linenoiseEditMoveHome(&l);
             break;
         case CTRL_E: /* ctrl+e, go to the end of the line */
-            linenoiseEditMoveEnd(&l);
+            lua_linenoiseEditMoveEnd(&l);
             break;
         case CTRL_L: /* ctrl+l, clear screen */
-            linenoiseClearScreen();
+            lua_linenoiseClearScreen();
             refreshLine(&l);
             break;
         case CTRL_W: /* ctrl+w, delete previous word */
-            linenoiseEditDeletePrevWord(&l);
+            lua_linenoiseEditDeletePrevWord(&l);
             break;
         }
         // if (__fbufsize(stdout) > 0) {
@@ -891,13 +891,13 @@ static int linenoiseEdit(char *buf, size_t buflen, const char *prompt)
     return l.len;
 }
 
-/* This special mode is used by linenoise in order to print scan codes
+/* This special mode is used by lua_linenoise in order to print scan codes
  * on screen for debugging / development purposes. It is implemented
- * by the linenoise_example program using the --keycodes option. */
-void linenoisePrintKeyCodes(void) {
+ * by the lua_linenoise_example program using the --keycodes option. */
+void lua_linenoisePrintKeyCodes(void) {
     char quit[4];
 
-    esp_lua_printf("Linenoise key codes debugging mode.\n"
+    esp_lua_printf("lua_linenoise key codes debugging mode.\n"
             "Press keys to see scan codes. Type 'quit' at any time to exit.\n");
     memset(quit,' ',4);
     while(1) {
@@ -916,7 +916,7 @@ void linenoisePrintKeyCodes(void) {
     }
 }
 
-static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
+static int lua_linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
     int count;
 
     if (buflen == 0) {
@@ -924,12 +924,12 @@ static int linenoiseRaw(char *buf, size_t buflen, const char *prompt) {
         return -1;
     }
 
-    count = linenoiseEdit(buf, buflen, prompt);
+    count = lua_linenoiseEdit(buf, buflen, prompt);
     esp_lua_putc('\n');
     return count;
 }
 
-static int linenoiseDumb(char* buf, size_t buflen, const char* prompt) {
+static int lua_linenoiseDumb(char* buf, size_t buflen, const char* prompt) {
     /* dumb terminal, fall back to fgets */
     esp_lua_printf(prompt);
     int count = 0;
@@ -1012,18 +1012,18 @@ static void sanitize(char* src) {
     *dst = 0;
 }
 
-/* The high level function that is the main API of the linenoise library. */
-char *linenoise(const char *prompt) {
+/* The high level function that is the main API of the lua_linenoise library. */
+char *lua_linenoise(const char *prompt) {
     if (exit_flag) {
         exit_flag = 0;
         return NULL;
     }
-    char *buf = calloc(1, LINENOISE_MAX_LINE);
+    char *buf = calloc(1, lua_linenoise_MAX_LINE);
     int count = 0;
     if (!dumbmode) {
-        count = linenoiseRaw(buf, LINENOISE_MAX_LINE, prompt);
+        count = lua_linenoiseRaw(buf, lua_linenoise_MAX_LINE, prompt);
     } else {
-        count = linenoiseDumb(buf, LINENOISE_MAX_LINE, prompt);
+        count = lua_linenoiseDumb(buf, lua_linenoise_MAX_LINE, prompt);
     }
     if (count >= 0) {
         sanitize(buf);
@@ -1036,21 +1036,21 @@ char *linenoise(const char *prompt) {
     return buf;
 }
 
-void linenoiseExit(void) {
+void lua_linenoiseExit(void) {
     exit_flag = 1;
 }
 
 /* This is just a wrapper the user may want to call in order to make sure
- * the linenoise returned buffer is freed with the same allocator it was
+ * the lua_linenoise returned buffer is freed with the same allocator it was
  * created with. Useful when the main program is using an alternative
  * allocator. */
-void linenoiseFree(void *ptr) {
+void lua_linenoiseFree(void *ptr) {
     free(ptr);
 }
 
 /* ================================ History ================================= */
 
-void linenoiseHistoryFree(void) {
+void lua_linenoiseHistoryFree(void) {
     if (history) {
         for (int j = 0; j < history_len; j++) {
             free(history[j]);
@@ -1060,14 +1060,14 @@ void linenoiseHistoryFree(void) {
     history = NULL;
 }
 
-/* This is the API call to add a new entry in the linenoise history.
+/* This is the API call to add a new entry in the lua_linenoise history.
  * It uses a fixed array of char pointers that are shifted (memmoved)
  * when the history max length is reached in order to remove the older
  * entry and make room for the new one, so it is not exactly suitable for huge
  * histories, but will work well for a few hundred of entries.
  *
  * Using a circular buffer is smarter, but a bit more complex to handle. */
-int linenoiseHistoryAdd(const char *line) {
+int lua_linenoiseHistoryAdd(const char *line) {
     char *linecopy;
 
     if (history_max_len == 0) return 0;
@@ -1100,7 +1100,7 @@ int linenoiseHistoryAdd(const char *line) {
  * if there is already some history, the function will make sure to retain
  * just the latest 'len' elements if the new history length value is smaller
  * than the amount of items already inside the history. */
-int linenoiseHistorySetMaxLen(int len) {
+int lua_linenoiseHistorySetMaxLen(int len) {
     char **new;
 
     if (len < 1) return 0;
@@ -1130,7 +1130,7 @@ int linenoiseHistorySetMaxLen(int len) {
 
 /* Save the history in the specified file. On success 0 is returned
  * otherwise -1 is returned. */
-int linenoiseHistorySave(const char *filename) {
+int lua_linenoiseHistorySave(const char *filename) {
     FILE *fp;
     int j;
 
@@ -1147,19 +1147,19 @@ int linenoiseHistorySave(const char *filename) {
  *
  * If the file exists and the operation succeeded 0 is returned, otherwise
  * on error -1 is returned. */
-int linenoiseHistoryLoad(const char *filename) {
+int lua_linenoiseHistoryLoad(const char *filename) {
     FILE *fp = fopen(filename,"r");
-    char buf[LINENOISE_MAX_LINE];
+    char buf[lua_linenoise_MAX_LINE];
 
     if (fp == NULL) return -1;
 
-    while (fgets(buf,LINENOISE_MAX_LINE,fp) != NULL) {
+    while (fgets(buf,lua_linenoise_MAX_LINE,fp) != NULL) {
         char *p;
 
         p = strchr(buf,'\r');
         if (!p) p = strchr(buf,'\n');
         if (p) *p = '\0';
-        linenoiseHistoryAdd(buf);
+        lua_linenoiseHistoryAdd(buf);
     }
     fclose(fp);
     return 0;

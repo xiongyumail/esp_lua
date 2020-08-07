@@ -9,7 +9,7 @@ extern "C" {
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
-#include "linenoise.h"
+#include "lua_linenoise.h"
 
 #if !defined(ESP_LUA_HISTORY_PATH)
 #define ESP_LUA_HISTORY_PATH "/lua/history.txt"

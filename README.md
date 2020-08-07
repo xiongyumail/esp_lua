@@ -17,7 +17,7 @@ git submodule add https://github.com/xiongyumail/esp_lua
 
 * stdin, stdout, baselibs
 
-When the output callback is set to NULL, output will be bound to `stdout` by default, full function `linenoise` will be used.
+When the output callback is set to NULL, output will be bound to `stdout` by default, full function `lua_linenoise` will be used.
 
 ```c
 #include "esp_lua.h"
@@ -36,7 +36,7 @@ void app_main()
 
 Here callback is bound to STD I/O stream, just to show how to use it, you can also map it to other devices, such as LCD.
 
-Complex terminal commands will be limited because they are not standard I/O. As a result, many linenoise features are not available.
+Complex terminal commands will be limited because they are not standard I/O. As a result, many lua_linenoise features are not available.
 
 ```c
 #include "esp_lua.h"
